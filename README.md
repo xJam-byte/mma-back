@@ -24,6 +24,114 @@
 
 ## Description
 
+MMA Backend — Documentation
+
+Overview
+The project is a backend platform similar to Sherdog or Tapology, enabling management of:
+
+🧍‍♂️ Fighter profiles
+
+🥊 Fight history
+
+🏆 Rankings by weight class
+
+🗓️ Event and card organization
+
+Stack
+
+NestJS
+
+TypeORM
+
+GraphQL (Code First)
+
+PostgreSQL
+
+Redis + Bull (for background jobs)
+
+Architecture
+The project follows the principles of CLEAN Architecture:
+
+src/
+├── modules/
+│ ├── fighter/
+│ ├── fight/
+│ ├── event/
+│ ├── ranking/
+│ └── rating/
+├── infrastructure/
+│ └── database/
+├── jobs/
+└── main.ts
+
+Ranking Algorithm
+The ranking system works as follows:
+
+Win by KO or Submission → +4 points
+
+Win by Decision → +3 points
+
+Draw → +1 point
+
+Loss → 0 points
+
+Additionally:
+
+Updates win_percentage
+
+Updates last_fight_date
+
+Updates rank within the weight class
+
+Rankings are recalculated in the background using Bull queue:
+
+await this.ratingQueue.add(RatingQueueJob.FIGHT_RESULT, {
+fightId: updated.id,
+});
+
+GraphQL Query Examples
+
+Create a Fighter:
+
+mutation {
+create_fighter(input: {
+first_name: "Jon"
+last_name: "Jones"
+weight_class_id: 1
+}) {
+fighter_id
+first_name
+last_name
+}
+}
+
+Finish a Fight:
+
+mutation {
+update_fight(input: {
+fight_id: 4
+winner_id: 7
+method: KO
+is_finished: true
+}) {
+fight_id
+is_finished
+}
+}
+
+Get Rankings:
+
+query {
+rankings {
+fighter_id
+weight_class_id
+points
+win_percentage
+rank
+}
+}
+
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Installation
