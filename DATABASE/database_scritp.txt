@@ -1,0 +1,108 @@
+-- ENUM: method of victory
+CREATE TYPE victory_method AS ENUM (
+    'KO',
+    'TKO',
+    'Submission',
+    'Decision',
+    'Draw',
+    'No Contest',
+    'DQ' -- Disqualification
+);
+
+-- Weight Classes
+CREATE TABLE weight_classes (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    min_weight_kg NUMERIC(5,2),
+    max_weight_kg NUMERIC(5,2)
+);
+
+-- Gyms
+CREATE TABLE gyms (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    location VARCHAR(100),
+    country VARCHAR(50)
+);
+
+-- Fighters
+CREATE TABLE fighters (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    nickname VARCHAR(50),
+    birthdate DATE,
+    country VARCHAR(50),
+    height_cm INTEGER,
+    weight_kg NUMERIC(5,2),
+    reach_cm NUMERIC(5,2),
+    stance VARCHAR(20),
+    gym_id INTEGER REFERENCES gyms(id) ON DELETE SET NULL,
+    weight_class_id INTEGER REFERENCES weight_classes(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Events
+CREATE TABLE events (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    location VARCHAR(100),
+    organization VARCHAR(50),
+    date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Fights
+CREATE TABLE fights (
+    id SERIAL PRIMARY KEY,
+    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+    weight_class_id INTEGER REFERENCES weight_classes(id),
+    fighter_a_id INTEGER REFERENCES fighters(id),
+    fighter_b_id INTEGER REFERENCES fighters(id),
+    winner_id INTEGER REFERENCES fighters(id),
+    method victory_method,
+    rounds INTEGER,
+    time VARCHAR(10),
+    fight_order INTEGER,
+    is_finished BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Fighter Stats
+CREATE TABLE fighter_stats (
+    id SERIAL PRIMARY KEY,
+    fighter_id INTEGER UNIQUE REFERENCES fighters(id) ON DELETE CASCADE,
+    wins INTEGER DEFAULT 0,
+    losses INTEGER DEFAULT 0,
+    draws INTEGER DEFAULT 0,
+    no_contests INTEGER DEFAULT 0,
+    ko_wins INTEGER DEFAULT 0,
+    submission_wins INTEGER DEFAULT 0,
+    decision_wins INTEGER DEFAULT 0,
+    ko_losses INTEGER DEFAULT 0,
+    submission_losses INTEGER DEFAULT 0,
+    decision_losses INTEGER DEFAULT 0
+);
+
+-- Rankings
+CREATE TABLE rankings (
+    id SERIAL PRIMARY KEY,
+    fighter_id INTEGER REFERENCES fighters(id) ON DELETE CASCADE,
+    weight_class_id INTEGER REFERENCES weight_classes(id),
+    points INTEGER DEFAULT 0,
+    win_percentage NUMERIC(5,2),
+    last_fight_date DATE,
+    rank INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (fighter_id, weight_class_id)
+);
+
+-- Fight Result Log
+CREATE TABLE fight_result_logs (
+    id SERIAL PRIMARY KEY,
+    fight_id INTEGER REFERENCES fights(id) ON DELETE CASCADE,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    old_rankings JSONB,
+    new_rankings JSONB
+);
